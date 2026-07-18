@@ -149,7 +149,7 @@ Create a skill for authoring/refining Terraform (module layout, naming, variable
 **Phase 4 — Terraform refactor by resource (using `terraform-wf`)**
 Refactor each resource group in order. Rename `terraform/` → `infra/`, introduce modules.
 
-1. DynamoDB — table **plus `owner-index` GSI**
+1. DynamoDB — table **plus `owner-index` GSI** ✅ *done — [`infra/modules/dynamodb/`](../infra/modules/dynamodb/main.tf)*
 2. Lambda
 3. **Cognito** — user pool + app client
 4. API Gateway — **wire the Cognito authorizer** onto the routes

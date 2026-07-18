@@ -1,0 +1,10 @@
+# Copy to backend.hcl (git-ignored) and fill in, then:
+#   terraform init -backend-config=backend.hcl
+#
+# Partial backend configuration keeps real bucket/key/region out of version
+# control and lets the same code target different backends per environment.
+
+bucket       = "REPLACE-with-your-tfstate-bucket"
+key          = "serverless-todo-app-aws/dev/terraform.tfstate"
+region       = "ca-central-1"
+use_lockfile = true   # S3-native state locking (Terraform 1.10+); no DynamoDB lock table needed
