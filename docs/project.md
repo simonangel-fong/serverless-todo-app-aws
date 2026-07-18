@@ -143,7 +143,7 @@ including ownership/isolation cases.
 > packaging to `lambda/src/` (entry point `handler.lambda_handler`) and removes `main.py`,
 > and **Phase 6** updates CI packaging.
 
-**Phase 3 — `terraform-wf` skill**
+**Phase 3 — `terraform-wf` skill** ✅ *done — see [`.claude/skills/terraform-wf/`](../.claude/skills/terraform-wf/SKILL.md)*
 Create a skill for authoring/refining Terraform (module layout, naming, variables, outputs).
 
 **Phase 4 — Terraform refactor by resource (using `terraform-wf`)**
