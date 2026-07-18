@@ -1,0 +1,3 @@
+# Dev/test dependencies (not packaged into the Lambda deployment artifact).
+pytest
+# moto  # uncomment for higher-fidelity repository tests against real boto3/DynamoDB

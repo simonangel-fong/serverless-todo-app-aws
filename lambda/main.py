@@ -1,3 +1,10 @@
+# DEPRECATED — superseded by the layered handler in lambda/src/ (Phase 2 refactor).
+# This file is auth-unaware and does not implement the locked API contract
+# (docs/api-contract.md). It is kept only so the current Terraform packaging
+# (terraform/tf_lambda.tf, source_file=main.py, handler=main.lambda_handler)
+# still plans/applies. Phase 4 rewires packaging to lambda/src/ (entry point
+# handler.lambda_handler) and Phase 6 updates CI packaging; this file is removed
+# then. Do not add features here — edit lambda/src/ instead.
 import json
 import boto3
 from decimal import Decimal

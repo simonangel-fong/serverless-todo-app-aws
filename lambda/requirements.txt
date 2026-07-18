@@ -1,1 +1,6 @@
-requests
+# Runtime dependencies for the Lambda (lambda/src/).
+# boto3 is provided by the AWS Lambda Python runtime, so it is intentionally NOT
+# pinned/packaged here. The refactored handler uses only boto3 + the standard
+# library, so there are no third-party runtime deps by design.
+#
+# Dev/test tooling lives in requirements-dev.txt.
