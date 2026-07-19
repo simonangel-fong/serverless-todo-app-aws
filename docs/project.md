@@ -155,8 +155,10 @@ Refactor each resource group in order. Rename `terraform/` → `infra/`, introdu
 4. API Gateway — **wire the Cognito authorizer** onto the routes ✅ *done — [`infra/apigateway.tf`](../infra/apigateway.tf); routes via `for_each` (~580 lines → ~1 file), Cognito authorizer on every route, OPTIONS MOCK preflight, Lambda invoke permission*
 5. S3 bucket ✅ *done — [`infra/s3.tf`](../infra/s3.tf); private bucket (all public access blocked), OAC-only read (policy in CloudFront step), provision-only (CI/CD uploads)*
 6. CloudFront ✅ *done — [`infra/cloudfront.tf`](../infra/cloudfront.tf); OAC distribution over the private bucket, managed cache policy, SPA error mapping, custom domain `todo-app.arguswatcher.net` on the `*.arguswatcher.net` ACM cert (us-east-1); completes the S3 OAC bucket policy*
-7. IAM / GitHub OIDC role
-8. CloudWatch
+7. IAM / GitHub OIDC role ✅ *done — [`infra/iam.tf`](../infra/iam.tf); OIDC provider (toggle) + deploy role, web-identity trust scoped to repo master+PRs, broad managed policies + state-bucket access. Replaces the pipeline's static keys.*
+8. CloudWatch ✅ *done — [`infra/cloudwatch.tf`](../infra/cloudwatch.tf); SNS alarm topic, metric alarms (Lambda errors/throttles, API 4xx/5xx, DynamoDB throttles) via `for_each`, and a stack dashboard*
+
+_Phase 4 complete: all resource groups migrated from `terraform/` to `infra/`._
 
 **Phase 5 — Frontend refactor**
 Refactor `s3/` HTML (rename → `web/`); align with the finalized API contract.

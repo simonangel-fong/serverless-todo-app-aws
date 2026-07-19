@@ -31,4 +31,13 @@ variable "env" {
   default     = "dev"
 }
 
+# ########################################
+# CI/CD deploy role (GitHub OIDC)
+# ########################################
+variable "state_bucket" {
+  type        = string
+  description = "Name of the S3 bucket holding Terraform state, so the deploy role can be granted access to it. Should match the bucket in backend.hcl."
+  default     = ""
+}
+
 

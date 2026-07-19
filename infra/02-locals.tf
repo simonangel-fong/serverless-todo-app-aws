@@ -63,4 +63,82 @@ locals {
   cloudfront_domain      = "todo-app.arguswatcher.net"
 
   acm_certificate_domain = "*.arguswatcher.net"
+
+  # ########################################
+  # CI/CD deploy role (GitHub OIDC)
+  # ########################################
+  github_repository = "simonangel-fong/serverless-todo-app-aws"
+  github_oidc_url   = "token.actions.githubusercontent.com"
+
+  # Refs allow: master, pull requests
+  github_allowed_subs = [
+    "repo:${local.github_repository}:ref:refs/heads/master",
+    "repo:${local.github_repository}:pull_request",
+  ]
+
+  # AWS-managed policies: services infra/ manages
+  deploy_managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+    "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
+    "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator",
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    "arn:aws:iam::aws:policy/CloudFrontFullAccess",
+    "arn:aws:iam::aws:policy/AmazonCognitoPowerUser",
+    "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess",
+  ]
+
+  # ########################################
+  # CloudWatch alarms
+  # ########################################
+  # Each alarm watches one failure signal. dimensions_key selects which resource's
+  # dimensions to attach in cloudwatch.tf (lambda / api / dynamodb). period is
+  # seconds; threshold is the value that trips the alarm over one period.
+  cloudwatch_alarms = {
+    lambda_errors = {
+      namespace      = "AWS/Lambda"
+      metric_name    = "Errors"
+      statistic      = "Sum"
+      threshold      = 1
+      period         = 300
+      dimensions_key = "lambda"
+      description    = "Lambda function returned one or more errors."
+    }
+    lambda_throttles = {
+      namespace      = "AWS/Lambda"
+      metric_name    = "Throttles"
+      statistic      = "Sum"
+      threshold      = 1
+      period         = 300
+      dimensions_key = "lambda"
+      description    = "Lambda invocations are being throttled."
+    }
+    api_5xx = {
+      namespace      = "AWS/ApiGateway"
+      metric_name    = "5XXError"
+      statistic      = "Sum"
+      threshold      = 1
+      period         = 300
+      dimensions_key = "api"
+      description    = "API Gateway returned server errors (5xx)."
+    }
+    api_4xx = {
+      namespace      = "AWS/ApiGateway"
+      metric_name    = "4XXError"
+      statistic      = "Sum"
+      threshold      = 20
+      period         = 300
+      dimensions_key = "api"
+      description    = "Elevated client errors (4xx) at the API."
+    }
+    dynamodb_throttles = {
+      namespace      = "AWS/DynamoDB"
+      metric_name    = "ThrottledRequests"
+      statistic      = "Sum"
+      threshold      = 1
+      period         = 300
+      dimensions_key = "dynamodb"
+      description    = "DynamoDB requests are being throttled."
+    }
+  }
 }

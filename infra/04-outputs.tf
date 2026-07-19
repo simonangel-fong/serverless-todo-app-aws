@@ -112,3 +112,29 @@ output "frontend_url" {
   description = "Public URL of the frontend, on the custom domain. Also the value for allowed_origin and the Cognito callback/logout URLs."
   value       = "https://${local.cloudfront_domain}"
 }
+
+# ########################################
+# CI/CD deploy role (GitHub OIDC)
+# ########################################
+output "deploy_role_arn" {
+  description = "ARN of the GitHub Actions deploy role. Set as the role-to-assume in the workflow (aws-actions/configure-aws-credentials)."
+  value       = aws_iam_role.deploy.arn
+}
+
+output "github_oidc_provider_arn" {
+  description = "ARN of the GitHub OIDC provider used by the deploy role."
+  value       = local.github_oidc_provider_arn
+}
+
+# ########################################
+# CloudWatch
+# ########################################
+output "alarms_sns_topic_arn" {
+  description = "SNS topic that alarms notify. Subscribe a confirmed endpoint (email, etc.) to receive alerts."
+  value       = aws_sns_topic.alarms.arn
+}
+
+output "dashboard_name" {
+  description = "CloudWatch dashboard name."
+  value       = aws_cloudwatch_dashboard.this.dashboard_name
+}
