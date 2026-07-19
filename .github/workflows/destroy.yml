@@ -16,7 +16,8 @@ permissions:
 
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
+  TF_VAR_app_name: todo-app
+  
 jobs:
   destroy:
     name: Destroy infrastructure
