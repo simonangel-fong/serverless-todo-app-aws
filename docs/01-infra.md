@@ -11,6 +11,7 @@ terraform -chdir=infra apply -auto-approve -var-file=dev.tfvars
 aws dynamodb describe-table --table-name todo-app-dev-table --query "Table.TableStatus"
 # "ACTIVE"
 
-
+# lambda
+aws lambda get-function --function-name todo-app-dev-api
 
 ```

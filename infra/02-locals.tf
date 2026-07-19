@@ -1,13 +1,9 @@
-# Naming convention and shared tags, defined once and derived everywhere.
-#
-# name_prefix is the single source of truth for resource names. It is currently
-# just var.app_name (keeping existing names stable during the migration — e.g.
-# the DynamoDB table stays "<app_name>-table" so relocating it into a module is a
-# pure state move, not a rename/replacement). An environment component can be
-# layered in later (e.g. "${var.app_name}-${var.environment}") once no stateful
-# resource would be renamed by it.
+# locals.tf
 
 locals {
+  # ########################################
+  # Metadata
+  # ########################################
   name_prefix = "${var.app_name}-${var.env}"
 
   default_tags = merge(var.extra_tags, {
@@ -15,4 +11,28 @@ locals {
     Environment = var.env
     ManagedBy   = "terraform"
   })
+
+  # ########################################
+  # Lambda Function
+  # ########################################
+  lambda_runtime            = "python3.12"
+  lambda_architectures      = ["x86_64"]
+  lambda_timeout            = 30
+  lambda_allowed_origin     = "*"
+  lambda_log_level          = "INFO"
+  lambda_log_retention_days = 14
+
+  # ########################################
+  # Cognito
+  # ########################################
+  cognito_callback_urls = ["http://localhost:3000/"]
+  cognito_logout_urls   = ["http://localhost:3000/"]
+
+  # Refresh/access/ID token validity.
+  cognito_refresh_token_days   = 30
+  cognito_access_token_minutes = 60
+  cognito_id_token_minutes     = 60
+
+  # Minimum password length
+  cognito_password_min_length = 8
 }

@@ -1,5 +1,8 @@
 # variables.tf
 
+# ########################################
+# Metadata
+# ########################################
 variable "app_name" {
   type        = string
   description = "Application name; used as the resource name prefix. Lowercase alphanumeric and hyphens only."
@@ -24,6 +27,6 @@ variable "extra_tags" {
 
 variable "env" {
   type        = string
-  description = ""
+  description = "Deployment environment name; part of the resource name prefix."
   default     = "dev"
 }
