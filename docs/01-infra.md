@@ -17,4 +17,13 @@ aws lambda get-function --function-name todo-app-dev-api
 # cognito
 aws cognito-idp describe-user-pool --user-pool-id ca-central-1_vzuDCzV5o
 
+# api gateway
+aws apigateway get-rest-api --rest-api-id 5ew1c8sl4b
+
+# s3
+aws s3api head-bucket --bucket todo-app-dev-web-i86ow1zo
+
+# cloudfront
+aws cloudfront get-distribution --id E3PATIL2EP58C3
+
 ```

@@ -154,7 +154,7 @@ Refactor each resource group in order. Rename `terraform/` → `infra/`, introdu
 3. **Cognito** — user pool + app client ✅ *done — [`infra/cognito.tf`](../infra/cognito.tf); email sign-in pool + public SPA client (no secret, SRP + code flow)*
 4. API Gateway — **wire the Cognito authorizer** onto the routes ✅ *done — [`infra/apigateway.tf`](../infra/apigateway.tf); routes via `for_each` (~580 lines → ~1 file), Cognito authorizer on every route, OPTIONS MOCK preflight, Lambda invoke permission*
 5. S3 bucket ✅ *done — [`infra/s3.tf`](../infra/s3.tf); private bucket (all public access blocked), OAC-only read (policy in CloudFront step), provision-only (CI/CD uploads)*
-6. CloudFront
+6. CloudFront ✅ *done — [`infra/cloudfront.tf`](../infra/cloudfront.tf); OAC distribution over the private bucket, managed cache policy, SPA error mapping, custom domain `todo-app.arguswatcher.net` on the `*.arguswatcher.net` ACM cert (us-east-1); completes the S3 OAC bucket policy*
 7. IAM / GitHub OIDC role
 8. CloudWatch
 

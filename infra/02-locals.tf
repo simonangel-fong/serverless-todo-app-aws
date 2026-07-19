@@ -54,4 +54,13 @@ locals {
   # S3 (frontend)
   # ########################################
   web_bucket_base = "${local.name_prefix}-web"
+
+  # ########################################
+  # CloudFront
+  # ########################################
+  # North America + Europe edge locations (cheapest).
+  cloudfront_price_class = "PriceClass_100"
+  cloudfront_domain      = "todo-app.arguswatcher.net"
+
+  acm_certificate_domain = "*.arguswatcher.net"
 }

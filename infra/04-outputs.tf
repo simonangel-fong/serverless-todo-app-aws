@@ -94,3 +94,21 @@ output "web_bucket_regional_domain_name" {
   description = "Frontend S3 bucket regional domain (the CloudFront origin domain)."
   value       = aws_s3_bucket.web.bucket_regional_domain_name
 }
+
+# ########################################
+# CloudFront
+# ########################################
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (for CI/CD cache invalidation)."
+  value       = aws_cloudfront_distribution.web.id
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain (*.cloudfront.net). This is the DNS target: point the frontend_domain at it with a CNAME (or Cloudflare proxied record)."
+  value       = aws_cloudfront_distribution.web.domain_name
+}
+
+output "frontend_url" {
+  description = "Public URL of the frontend, on the custom domain. Also the value for allowed_origin and the Cognito callback/logout URLs."
+  value       = "https://${local.cloudfront_domain}"
+}

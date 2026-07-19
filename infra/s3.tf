@@ -41,3 +41,37 @@ resource "aws_s3_bucket_ownership_controls" "web" {
     object_ownership = "BucketOwnerEnforced"
   }
 }
+
+
+# ########################################
+# S3 bucket policy
+# ########################################
+# allow ONLY this distribution to read the bucket (OAC)
+data "aws_iam_policy_document" "web_bucket" {
+  statement {
+    sid    = "AllowCloudFrontRead"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.web.arn}/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.web.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "web" {
+  bucket = aws_s3_bucket.web.id
+  policy = data.aws_iam_policy_document.web_bucket.json
+
+  # public access block
+  depends_on = [aws_s3_bucket_public_access_block.web]
+}
