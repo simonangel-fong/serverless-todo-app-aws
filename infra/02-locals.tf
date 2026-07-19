@@ -76,7 +76,11 @@ locals {
   # Refs allow: master, pull requests
   github_allowed_subs = [
     "repo:${local.github_repository}:ref:refs/heads/master",
+    "repo:${local.github_repository}:environment:production",
     "repo:${local.github_repository}:pull_request",
+    "repo:simonangel-fong/Project-Serverless-Todo-List:ref:refs/heads/master",
+    "repo:simonangel-fong/Project-Serverless-Todo-List:pull_request",
+    "repo:simonangel-fong/Project-Serverless-Todo-List:environment:production",
   ]
 
   # AWS-managed policies: services infra/ manages
