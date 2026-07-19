@@ -36,7 +36,7 @@ jobs:
     name: Security scan (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Trivy IaC scan
         uses: aquasecurity/trivy-action@v0.36.0
@@ -62,7 +62,7 @@ jobs:
     # The environment gate only needs to fire when we will apply.
     environment: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')) && 'production' || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v5
