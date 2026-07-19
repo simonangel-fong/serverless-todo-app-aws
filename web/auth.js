@@ -78,12 +78,15 @@ const Auth = (() => {
     window.location.href = "login.html";
   }
 
-  // Gate a page: redirect to login unless there's a valid session.
+  // Gate a page: redirect to login unless there's a valid session. Rejects on
+  // the redirect path so callers' .then() (e.g. loadTodos) does NOT run and
+  // flash protected content before navigation completes.
   async function requireLogin() {
     try {
       await getIdToken();
     } catch {
-      window.location.href = "login.html";
+      window.location.replace("login.html");
+      throw new Error("Redirecting to login");
     }
   }
 
