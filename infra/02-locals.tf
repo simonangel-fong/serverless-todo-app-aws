@@ -64,6 +64,9 @@ locals {
 
   acm_certificate_domain = "*.arguswatcher.net"
 
+  # Cloudflare zone that hosts cloudfront_domain (the apex, not the subdomain).
+  dns_zone_name = "arguswatcher.net"
+
   # ########################################
   # CI/CD deploy role (GitHub OIDC)
   # ########################################
@@ -91,9 +94,6 @@ locals {
   # ########################################
   # CloudWatch alarms
   # ########################################
-  # Each alarm watches one failure signal. dimensions_key selects which resource's
-  # dimensions to attach in cloudwatch.tf (lambda / api / dynamodb). period is
-  # seconds; threshold is the value that trips the alarm over one period.
   cloudwatch_alarms = {
     lambda_errors = {
       namespace      = "AWS/Lambda"

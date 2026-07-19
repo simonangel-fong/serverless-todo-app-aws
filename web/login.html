@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Todo List</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body class="bg-light">
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-5 mx-auto">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h2 class="mb-0" id="formTitle">Sign in</h2>
+          </div>
+          <div class="card-body">
+            <div id="alert" class="alert d-none" role="alert"></div>
+
+            <!-- Sign in -->
+            <form id="signInForm">
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="signInEmail" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="signInPassword" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Sign in</button>
+              <p class="mt-3 mb-0 text-center">
+                No account? <a href="#" id="showSignUp">Create one</a>
+              </p>
+            </form>
+
+            <!-- Sign up -->
+            <form id="signUpForm" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="signUpEmail" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="signUpPassword" required />
+                <div class="form-text">Min 8 chars, with upper, lower, number, and symbol.</div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Create account</button>
+              <p class="mt-3 mb-0 text-center">
+                Have an account? <a href="#" id="showSignIn">Sign in</a>
+              </p>
+            </form>
+
+            <!-- Confirm code -->
+            <form id="confirmForm" class="d-none">
+              <p>We emailed you a verification code. Enter it to activate your account.</p>
+              <div class="mb-3">
+                <label class="form-label">Verification code</label>
+                <input type="text" class="form-control" id="confirmCode" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Confirm</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/6.3.7/amazon-cognito-identity.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const forms = {
+      signIn: document.getElementById("signInForm"),
+      signUp: document.getElementById("signUpForm"),
+      confirm: document.getElementById("confirmForm"),
+    };
+    const title = document.getElementById("formTitle");
+    const alertBox = document.getElementById("alert");
+    let pendingEmail = null;
+
+    function show(which, titleText) {
+      Object.values(forms).forEach((f) => f.classList.add("d-none"));
+      forms[which].classList.remove("d-none");
+      title.textContent = titleText;
+      hideAlert();
+    }
+    function showAlert(msg, kind = "danger") {
+      alertBox.className = `alert alert-${kind}`;
+      alertBox.textContent = msg;
+    }
+    function hideAlert() {
+      alertBox.className = "alert d-none";
+    }
+
+    // If already signed in, skip login.
+    if (Auth.currentUser()) {
+      Auth.getIdToken().then(() => (window.location.href = "index.html")).catch(() => {});
+    }
+
+    document.getElementById("showSignUp").onclick = (e) => { e.preventDefault(); show("signUp", "Create account"); };
+    document.getElementById("showSignIn").onclick = (e) => { e.preventDefault(); show("signIn", "Sign in"); };
+
+    forms.signIn.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await Auth.signIn(document.getElementById("signInEmail").value, document.getElementById("signInPassword").value);
+        window.location.href = "index.html";
+      } catch (err) {
+        showAlert(err.message || "Sign in failed");
+      }
+    });
+
+    forms.signUp.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      pendingEmail = document.getElementById("signUpEmail").value;
+      try {
+        await Auth.signUp(pendingEmail, document.getElementById("signUpPassword").value);
+        show("confirm", "Confirm your email");
+      } catch (err) {
+        showAlert(err.message || "Sign up failed");
+      }
+    });
+
+    forms.confirm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await Auth.confirm(pendingEmail, document.getElementById("confirmCode").value);
+        showAlert("Account confirmed — please sign in.", "success");
+        show("signIn", "Sign in");
+        showAlert("Account confirmed — please sign in.", "success");
+      } catch (err) {
+        showAlert(err.message || "Confirmation failed");
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,6 +1,14 @@
 # outputs.tf
 
 # ########################################
+# Frontend config (consumed by CI/CD to fill web/config.js)
+# ########################################
+output "aws_region" {
+  description = "AWS region (for the frontend's Cognito config)."
+  value       = var.aws_region
+}
+
+# ########################################
 # DynamoDB
 # ########################################
 output "dynamodb_table_name" {
@@ -137,4 +145,12 @@ output "alarms_sns_topic_arn" {
 output "dashboard_name" {
   description = "CloudWatch dashboard name."
   value       = aws_cloudwatch_dashboard.this.dashboard_name
+}
+
+# ########################################
+# DNS (Cloudflare)
+# ########################################
+output "dns_record_name" {
+  description = "Managed Cloudflare CNAME for the frontend, pointing at CloudFront."
+  value       = cloudflare_dns_record.frontend.name
 }

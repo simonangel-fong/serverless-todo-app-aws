@@ -32,6 +32,15 @@ variable "env" {
 }
 
 # ########################################
+# Cloudflare DNS
+# ########################################
+variable "cloudflare_api_token" {
+  type        = string
+  description = "Cloudflare API token with DNS edit + zone read for the frontend zone. Supply via TF_VAR_cloudflare_api_token; never commit it."
+  sensitive   = true
+}
+
+# ########################################
 # CI/CD deploy role (GitHub OIDC)
 # ########################################
 variable "state_bucket" {

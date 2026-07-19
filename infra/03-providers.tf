@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
   }
 
   # Partial backend config
@@ -30,4 +34,9 @@ provider "aws" {
   default_tags {
     tags = local.default_tags
   }
+}
+
+# Cloudflare: manages the DNS record 
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }

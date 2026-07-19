@@ -160,13 +160,16 @@ Refactor each resource group in order. Rename `terraform/` → `infra/`, introdu
 
 _Phase 4 complete: all resource groups migrated from `terraform/` to `infra/`._
 
-**Phase 5 — Frontend refactor**
+**Phase 5 — Frontend refactor** ✅ *done — [`web/`](../web/); renamed from `s3/`, Cognito SRP sign-in (login.html + auth.js), ID token on every call via apiFetch, added edit/PUT, config.js placeholders filled by CI/CD*
 Refactor `s3/` HTML (rename → `web/`); align with the finalized API contract.
 Add the Cognito sign-in flow and send the token on every API call.
 
 **Phase 6 — `cicd` skill + pipeline refactor**
 Create the CI/CD skill, then refactor `.github/workflows/deploy.yml` (OIDC, plan/apply gating,
 Lambda packaging, frontend sync + CloudFront invalidation).
+
+- ✅ `cicd` skill — [`.claude/skills/cicd/`](../.claude/skills/cicd/SKILL.md); OIDC auth, plan/apply gating, artifact packaging, frontend inject/sync/invalidate + reference `deploy.yml`.
+- ⬜ pipeline refactor — rewrite `.github/workflows/deploy.yml` using the skill.
 
 ---
 

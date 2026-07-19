@@ -5,6 +5,11 @@
 app_name = "todo-app"
 env      = "dev"
 
-# Frontend origin allowed by CORS. Keep as the real CloudFront/custom domain once
-# known (e.g. "https://d1234.cloudfront.net"); "*" is only acceptable pre-frontend.
-allowed_origin = "*"
+# S3 bucket holding Terraform state (matches backend.hcl); grants the CI/CD
+# deploy role access to state. Leave "" to skip that policy.
+state_bucket = ""
+
+# NOTE: cloudflare_api_token is required but must NOT go here. Supply it via the
+# environment so it stays out of version control:
+#   export TF_VAR_cloudflare_api_token=...   (bash)
+#   $env:TF_VAR_cloudflare_api_token="..."   (PowerShell)

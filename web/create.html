@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create New Task</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+</head>
+
+<body class="bg-light">
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-6 mx-auto">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Create New Task</h2>
+            <a class="btn btn-light btn-sm" href="index.html"><i class="fas fa-arrow-left me-1"></i> Back</a>
+          </div>
+          <div class="card-body">
+            <div id="alert" class="alert d-none" role="alert"></div>
+            <form id="createTaskForm">
+              <div class="mb-3">
+                <label for="taskName" class="form-label">Task Name</label>
+                <input type="text" class="form-control" id="taskName" name="task_name" required />
+              </div>
+              <div class="mb-3">
+                <label for="taskPriority" class="form-label">Priority</label>
+                <select class="form-select" id="taskPriority" name="task_priority">
+                  <option value="High">High</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="taskStatus" class="form-label">Status</label>
+                <select class="form-select" id="taskStatus" name="task_status">
+                  <option value="Pending" selected>Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="dueDate" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="dueDate" name="due_date" />
+              </div>
+              <button type="submit" class="btn btn-primary">Create Task</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/6.3.7/amazon-cognito-identity.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    function showAlert(msg, kind = "danger") {
+      alertBox.className = `alert alert-${kind}`;
+      alertBox.textContent = msg;
+    }
+
+    document.getElementById("createTaskForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      // Build the body from fields; send due_date as null when blank (contract §3).
+      const body = {
+        task_name: document.getElementById("taskName").value,
+        task_priority: document.getElementById("taskPriority").value,
+        task_status: document.getElementById("taskStatus").value,
+        due_date: document.getElementById("dueDate").value || null,
+      };
+
+      try {
+        const response = await apiFetch("/items", { method: "POST", body: JSON.stringify(body) });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || err.error || response.statusText || "Failed to create task");
+        }
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Error creating task:", error);
+        showAlert(error.message || "Failed to create task. Please try again.");
+      }
+    });
+
+    // Gate the page.
+    Auth.requireLogin();
+  </script>
+</body>
+
+</html>
