@@ -1,4 +1,17 @@
-# Serverless Todo List — Project Plan
+# Serverless Todo App — Refactor Plan
+
+[Back](../README.md)
+
+- [Serverless Todo App — Refactor Plan](#serverless-todo-app--refactor-plan)
+  - [Goal](#goal)
+  - [Stack](#stack)
+  - [Current file structure](#current-file-structure)
+    - [Target file structure](#target-file-structure)
+  - [Data model — DynamoDB table `todo-app-table`](#data-model--dynamodb-table-todo-app-table)
+  - [API contract](#api-contract)
+    - [Known contract issues to fix during refactor](#known-contract-issues-to-fix-during-refactor)
+  - [Phases](#phases)
+  - [Roadmap (post-refactor)](#roadmap-post-refactor)
 
 ## Goal
 
@@ -70,13 +83,13 @@ as a `query` instead of a `scan`.
 
 ```json
 {
-  "id": "<uuid>",              // table partition key
+  "id": "<uuid>", // table partition key
   "owner_id": "<cognito-sub>", // GSI partition key; from the caller's token, never the body
-  "task_name": "string",       // required
-  "task_priority": "High | Medium | Low",   // default "Medium"
-  "task_status": "Pending | In Progress | Completed",  // default "Pending"
+  "task_name": "string", // required
+  "task_priority": "High | Medium | Low", // default "Medium"
+  "task_status": "Pending | In Progress | Completed", // default "Pending"
   "due_date": "ISO-8601 | null",
-  "created_at": "ISO-8601"     // set on create
+  "created_at": "ISO-8601" // set on create
 }
 ```
 
@@ -96,13 +109,13 @@ carries a verified identity; the caller's `sub` is read from
 Routes are `/items` and `/items/{id}`.
 Responses are wrapped: `{ "message": string, "data"?: ..., "error"?: string }`.
 
-| Method | Route          | Behavior                                          | Success     | Errors            |
-| ------ | -------------- | ------------------------------------------------- | ----------- | ----------------- |
-| GET    | `/items`       | list caller's items (`query` on `owner-index`)    | 200 + array | 401               |
-| POST   | `/items`       | create (body requires `task_name`)                | 201 + item  | 400 / 401         |
-| GET    | `/items/{id}`  | fetch one (must belong to caller)                 | 200 + item  | 401 / 404         |
-| PUT    | `/items/{id}`  | update mutable fields (must belong to caller)     | 200 + item  | 400 / 401 / 404   |
-| DELETE | `/items/{id}`  | delete (must belong to caller)                    | 200         | 401 / 404         |
+| Method | Route         | Behavior                                       | Success     | Errors          |
+| ------ | ------------- | ---------------------------------------------- | ----------- | --------------- |
+| GET    | `/items`      | list caller's items (`query` on `owner-index`) | 200 + array | 401             |
+| POST   | `/items`      | create (body requires `task_name`)             | 201 + item  | 400 / 401       |
+| GET    | `/items/{id}` | fetch one (must belong to caller)              | 200 + item  | 401 / 404       |
+| PUT    | `/items/{id}` | update mutable fields (must belong to caller)  | 200 + item  | 400 / 401 / 404 |
+| DELETE | `/items/{id}` | delete (must belong to caller)                 | 200         | 401 / 404       |
 
 **Ownership rule:** for `/items/{id}`, if the item's `owner_id` ≠ caller, return **404**
 (not 403 — don't leak that the id exists). `owner_id` is always taken from the token, never
@@ -120,17 +133,17 @@ from the request body.
 
 ## Phases
 
-**Phase 0 — API redesign (auth included)** ✅ *done — see [`api-contract.md`](api-contract.md)*
+**Phase 0 — API redesign (auth included)** ✅ _done — see [`api-contract.md`](api-contract.md)_
 Lock the contract above; resolve the "known contract issues"; document request/response
 shapes. Define the auth model: Cognito authorizer, `owner_id` from the token, the 404
 ownership rule.
 
-**Phase 1 — `lambda-py` skill** ✅ *done — see [`.claude/skills/lambda-py/`](../.claude/skills/lambda-py/SKILL.md)*
+**Phase 1 — `lambda-py` skill** ✅ _done — see [`.claude/skills/lambda-py/`](../.claude/skills/lambda-py/SKILL.md)_
 Create a skill for authoring/refining Python Lambda functions (structure, validation,
 error handling, test scaffolding). Built before the Lambda refactor so the refactor is
 driven by the skill.
 
-**Phase 2 — Lambda refactor (auth-aware, using `lambda-py`)** ✅ *done — code in [`lambda/src/`](../lambda/src/handler.py), tests in [`lambda/tests/`](../lambda/tests/)*
+**Phase 2 — Lambda refactor (auth-aware, using `lambda-py`)** ✅ _done — code in [`lambda/src/`](../lambda/src/handler.py), tests in [`lambda/tests/`](../lambda/tests/)_
 Refactor `lambda/main.py`: split routing from business logic, add input validation,
 consistent error handling, and structured logging. **Scope every route by `owner_id`**
 (read `sub` from the authorizer claims; `GET /items` queries `owner-index`; stamp `owner_id`
@@ -143,24 +156,24 @@ including ownership/isolation cases.
 > packaging to `lambda/src/` (entry point `handler.lambda_handler`) and removes `main.py`,
 > and **Phase 6** updates CI packaging.
 
-**Phase 3 — `terraform-wf` skill** ✅ *done — see [`.claude/skills/terraform-wf/`](../.claude/skills/terraform-wf/SKILL.md)*
+**Phase 3 — `terraform-wf` skill** ✅ _done — see [`.claude/skills/terraform-wf/`](../.claude/skills/terraform-wf/SKILL.md)_
 Create a skill for authoring/refining Terraform (module layout, naming, variables, outputs).
 
 **Phase 4 — Terraform refactor by resource (using `terraform-wf`)**
 Refactor each resource group in order. Rename `terraform/` → `infra/`, introduce modules.
 
-1. DynamoDB — table **plus `owner-index` GSI** ✅ *done — [`infra/modules/dynamodb/`](../infra/modules/dynamodb/main.tf)*
-2. Lambda ✅ *done — [`infra/lambda.tf`](../infra/lambda.tf); handler `handler.lambda_handler`, `src/` packaged, env vars wired, dependency layer dropped, exec role least-privilege*
-3. **Cognito** — user pool + app client ✅ *done — [`infra/cognito.tf`](../infra/cognito.tf); email sign-in pool + public SPA client (no secret, SRP + code flow)*
-4. API Gateway — **wire the Cognito authorizer** onto the routes ✅ *done — [`infra/apigateway.tf`](../infra/apigateway.tf); routes via `for_each` (~580 lines → ~1 file), Cognito authorizer on every route, OPTIONS MOCK preflight, Lambda invoke permission*
-5. S3 bucket ✅ *done — [`infra/s3.tf`](../infra/s3.tf); private bucket (all public access blocked), OAC-only read (policy in CloudFront step), provision-only (CI/CD uploads)*
-6. CloudFront ✅ *done — [`infra/cloudfront.tf`](../infra/cloudfront.tf); OAC distribution over the private bucket, managed cache policy, SPA error mapping, custom domain `todo-app.arguswatcher.net` on the `*.arguswatcher.net` ACM cert (us-east-1); completes the S3 OAC bucket policy*
-7. IAM / GitHub OIDC role ✅ *done — [`infra/iam.tf`](../infra/iam.tf); OIDC provider (toggle) + deploy role, web-identity trust scoped to repo master+PRs, broad managed policies + state-bucket access. Replaces the pipeline's static keys.*
-8. CloudWatch ✅ *done — [`infra/cloudwatch.tf`](../infra/cloudwatch.tf); SNS alarm topic, metric alarms (Lambda errors/throttles, API 4xx/5xx, DynamoDB throttles) via `for_each`, and a stack dashboard*
+1. DynamoDB — table **plus `owner-index` GSI** ✅ _done — [`infra/modules/dynamodb/`](../infra/modules/dynamodb/main.tf)_
+2. Lambda ✅ _done — [`infra/lambda.tf`](../infra/lambda.tf); handler `handler.lambda_handler`, `src/` packaged, env vars wired, dependency layer dropped, exec role least-privilege_
+3. **Cognito** — user pool + app client ✅ _done — [`infra/cognito.tf`](../infra/cognito.tf); email sign-in pool + public SPA client (no secret, SRP + code flow)_
+4. API Gateway — **wire the Cognito authorizer** onto the routes ✅ _done — [`infra/apigateway.tf`](../infra/apigateway.tf); routes via `for_each` (~580 lines → ~1 file), Cognito authorizer on every route, OPTIONS MOCK preflight, Lambda invoke permission_
+5. S3 bucket ✅ _done — [`infra/s3.tf`](../infra/s3.tf); private bucket (all public access blocked), OAC-only read (policy in CloudFront step), provision-only (CI/CD uploads)_
+6. CloudFront ✅ _done — [`infra/cloudfront.tf`](../infra/cloudfront.tf); OAC distribution over the private bucket, managed cache policy, SPA error mapping, custom domain `todo-app.arguswatcher.net` on the `_.arguswatcher.net` ACM cert (us-east-1); completes the S3 OAC bucket policy\*
+7. IAM / GitHub OIDC role ✅ _done — [`infra/iam.tf`](../infra/iam.tf); OIDC provider (toggle) + deploy role, web-identity trust scoped to repo master+PRs, broad managed policies + state-bucket access. Replaces the pipeline's static keys._
+8. CloudWatch ✅ _done — [`infra/cloudwatch.tf`](../infra/cloudwatch.tf); SNS alarm topic, metric alarms (Lambda errors/throttles, API 4xx/5xx, DynamoDB throttles) via `for_each`, and a stack dashboard_
 
 _Phase 4 complete: all resource groups migrated from `terraform/` to `infra/`._
 
-**Phase 5 — Frontend refactor** ✅ *done — [`web/`](../web/); renamed from `s3/`, Cognito SRP sign-in (login.html + auth.js), ID token on every call via apiFetch, added edit/PUT, config.js placeholders filled by CI/CD*
+**Phase 5 — Frontend refactor** ✅ _done — [`web/`](../web/); renamed from `s3/`, Cognito SRP sign-in (login.html + auth.js), ID token on every call via apiFetch, added edit/PUT, config.js placeholders filled by CI/CD_
 Refactor `s3/` HTML (rename → `web/`); align with the finalized API contract.
 Add the Cognito sign-in flow and send the token on every API call.
 

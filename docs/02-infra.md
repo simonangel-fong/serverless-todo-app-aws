@@ -1,3 +1,14 @@
+# Serverless Todo App - IaC
+
+[Back](../README.md)
+
+- [Serverless Todo App - IaC](#serverless-todo-app---iac)
+  - [Terraform](#terraform)
+  - [AWS CLI](#aws-cli)
+
+---
+
+## Terraform
 
 ```sh
 terraform -chdir=infra init -backend-config=backend.hcl
@@ -6,6 +17,10 @@ terraform -chdir=infra fmt && terraform -chdir=infra validate
 terraform -chdir=infra apply -auto-approve -var-file=dev.tfvars
 terraform -chdir=infra destroy -auto-approve -var-file=dev.tfvars
 ```
+
+---
+
+## AWS CLI
 
 ```sh
 # dynamodb
@@ -26,5 +41,4 @@ aws s3api head-bucket --bucket todo-app-dev-web-i86ow1zo
 
 # cloudfront
 aws cloudfront get-distribution --id E3PATIL2EP58C3
-
 ```

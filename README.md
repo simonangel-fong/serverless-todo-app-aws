@@ -1,58 +1,93 @@
-# Serverless Todo List
+# Serverless Todo App (AWS)
 
-A cloud-native, multi-user todo app on AWS — serverless API, static frontend,
-fully managed with Terraform and deployed via GitHub Actions (OIDC).
+A serverless, multi-user todo app on AWS.
 
-## Stack
+## Specification
 
-| Layer     | Tech                                                              |
-| --------- | ---------------------------------------------------------------- |
-| Frontend  | Static HTML/JS on **S3** (private) + **CloudFront** (OAC, HTTPS)  |
-| API       | **API Gateway** (REST) → **Lambda** (Python)                     |
-| Auth      | **Cognito** user pool; ID token on every request (404 ownership) |
-| Data      | **DynamoDB** (`id` PK + `owner-index` GSI)                       |
-| DNS       | **Cloudflare** CNAME → CloudFront                                |
-| IaC       | **Terraform** (remote S3 state)                                  |
-| CI/CD     | **GitHub Actions** — OIDC, Trivy scan, plan/apply gating         |
-| Monitoring| **CloudWatch** alarms + dashboard                               |
+- Tech Stack
 
-![architecture](./architecture.png)
+| Layer      | Tech                                           |
+| ---------- | ---------------------------------------------- |
+| Frontend   | Static HTML/JS on `S3` + `CloudFront`          |
+| API        | `API Gateway` (REST) → `Lambda` (Python)       |
+| Auth       | `Cognito` user pool; ID token on every request |
+| Data       | `DynamoDB`                                     |
+| DNS        | `Cloudflare` CNAME → `CloudFront`              |
+| IaC        | `Terraform` (remote `S3` state)                |
+| CI/CD      | `GitHub Actions` OIDC, `Trivy` scan            |
+| Monitoring | `CloudWatch` alarms + dashboard                |
 
-## Layout
+![architecture](./docs/img/architecture.png)
+
+- File Layout
 
 ```
+.claude/  Claude Code skills
+.github/  deploy.yml, destroy.yml, dependabot.yml
+docs/     API contract + project plan
 infra/    Terraform (one file per resource group) + dev.tfvars
 lambda/   src/ (handler→service→repository) + tests/
 web/      static frontend (config.js rendered by Terraform)
-docs/     API contract + project plan
-.github/  deploy.yml, destroy.yml, dependabot.yml
 ```
 
-## Deploy
+---
 
-Deployment runs through GitHub Actions. Required repo secrets:
-`AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `TF_STATE_BUCKET`, `TF_STATE_KEY`,
-`CLOUDFLARE_API_TOKEN` — plus a `production` environment with reviewers.
+## Development & Deployment
 
-- **PR** → format / validate / plan (read-only)
-- **Push to `master`** → plan, then gated apply
-- **`destroy.yml`** → manual teardown (typed confirmation + approval)
-
-Terraform packages the Lambda (`lambda/src/`) and uploads `web/` itself, so no
-separate build step.
-
-### Run locally
+- Local Development
 
 ```sh
-cd infra
-cp backend.hcl.example backend.hcl   # fill in state bucket
-terraform init -backend-config=backend.hcl
+# Test the Lambda locally
+cd lambda && python -m pytest tests/
+
+# Initialize with the remote backend
+terraform -chdir=infra init -backend-config=backend.hcl
+# Apply using the local dev.tfvars file
 terraform apply -var-file=dev.tfvars
 ```
 
-Lambda tests: `cd lambda && python -m pytest tests/`
+---
 
-## Details
+- Production Deployment
+  - CI/CD pipeline: managed by `GitHub Actions`
+  - Shift-left security: automated `Trivy` scans in the pipeline
+  - Authentication security: uses `OIDC` with `AWS`
+  - Environment isolation: provided through the `GitHub Actions` environments feature
 
-See [`docs/api-contract.md`](docs/api-contract.md) for the API + auth model and
-[`docs/project.md`](docs/project.md) for the design/refactor history.
+- `GitHub Actions` in Action
+  ![cicd](./docs/img/cicd_github_action.png)
+
+---
+
+## Application Demo
+
+- Sign up: todo-app.arguswatcher.net
+  ![sign up](./docs/img/demo_signup.png)
+
+- Create a todo item
+  ![create](./docs/img/demo_create.png)
+
+- List todo items
+  ![list](./docs/img/demo_list.png)
+
+- Update a todo item
+  ![update](./docs/img/demo_update.png)
+
+- Delete a todo item
+  ![delete](./docs/img/demo_delete.png)
+
+---
+
+## AI Tool Reflection - `Claude Code`
+
+- This project uses the AI tool `Claude Code`.
+  - Workflow:
+    - Brainstorm the design for a new version.
+    - Document the refactoring design in [/docs/00-PLAN.md](./docs/00-PLAN.md).
+    - Create skills with clear instructions for `Terraform` and `GitHub Actions` workflows.
+    - Iterate through each refactoring cycle with `Claude Code`.
+- Lessons:
+  - A skill with clear instructions improves productivity more than a role-based subagent.
+  - Keeping a human in the loop is important. Depending on the context, `Claude Code` may suggest an overengineered design.
+    - For example, `Claude Code` suggested using both **terraform apply** and the **AWS CLI** to deploy the web app. In this case, Terraform alone is sufficient.
+  - General skills follow best practices, while custom rules require manual editing.
