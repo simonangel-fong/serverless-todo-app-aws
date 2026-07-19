@@ -36,7 +36,11 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Ignore backend/secret .hcl config (partial backend values), but NOT the
+# provider lockfile — .terraform.lock.hcl must be committed for reproducible
+# provider versions and to key the CI provider cache.
 *.hcl
+!**/.terraform.lock.hcl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

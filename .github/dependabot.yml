@@ -1,0 +1,33 @@
+# Dependabot: open weekly PRs when dependencies have newer versions.
+# Each PR runs through the normal CI (including the Trivy security scan and the
+# Terraform plan), so updates are reviewed and gated before merge.
+
+version: 2
+updates:
+  # GitHub Actions used in the workflows (checkout, setup-terraform, trivy, ...).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    labels: [dependencies, github-actions]
+
+  # Python deps for the Lambda (currently dev-only: pytest). Watches both
+  # requirements.txt and requirements-dev.txt in lambda/.
+  - package-ecosystem: pip
+    directory: /lambda
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "deps"
+    labels: [dependencies, python]
+
+  # Terraform provider versions (the aws/cloudflare constraints in infra/).
+  - package-ecosystem: terraform
+    directory: /infra
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "infra"
+    labels: [dependencies, terraform]
