@@ -53,4 +53,4 @@ jobs:
           aws s3 rm "s3://${BUCKET}/" --recursive
 
       - name: Destroy
-        run: terraform -chdir=infra destroy -auto-approve -var-file=dev.tfvars
+        run: terraform -chdir=infra destroy -auto-approve
