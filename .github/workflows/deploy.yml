@@ -76,7 +76,7 @@ jobs:
       # invalidates when provider versions change. The dir must exist before init
       # writes to it.
       - name: Cache Terraform providers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.terraform.d/plugin-cache
           key: ${{ runner.os }}-tf-plugins-${{ hashFiles('infra/.terraform.lock.hcl') }}
