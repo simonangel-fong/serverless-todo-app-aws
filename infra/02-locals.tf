@@ -147,6 +147,3 @@ locals {
     }
   }
 }
-
-
-aws iam get-role --role-name serverless-todo-app-aws-github-deploy-role  --query 'Role.{Arn:Arn,Trust:AssumeRolePolicyDocument}'
