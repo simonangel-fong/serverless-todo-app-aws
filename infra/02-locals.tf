@@ -49,4 +49,9 @@ locals {
     update_item = { http_method = "PUT", resource_key = "item" }
     delete_item = { http_method = "DELETE", resource_key = "item" }
   }
+
+  # ########################################
+  # S3 (frontend)
+  # ########################################
+  web_bucket_base = "${local.name_prefix}-web"
 }

@@ -76,3 +76,21 @@ output "api_stage_name" {
   description = "Deployed stage name."
   value       = aws_api_gateway_stage.this.stage_name
 }
+
+# ########################################
+# S3 (frontend)
+# ########################################
+output "web_bucket_id" {
+  description = "Frontend S3 bucket name (for the CI/CD sync target)."
+  value       = aws_s3_bucket.web.id
+}
+
+output "web_bucket_arn" {
+  description = "Frontend S3 bucket ARN (for the CloudFront OAC bucket policy)."
+  value       = aws_s3_bucket.web.arn
+}
+
+output "web_bucket_regional_domain_name" {
+  description = "Frontend S3 bucket regional domain (the CloudFront origin domain)."
+  value       = aws_s3_bucket.web.bucket_regional_domain_name
+}
