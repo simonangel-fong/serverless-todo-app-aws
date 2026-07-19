@@ -11,7 +11,7 @@ locals {
 data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = local.lambda_source_dir
-  output_path = "${path.module}/../lambda/build/api.zip"
+  output_path = "${path.module}/../lambda/api.zip"
 }
 
 # ########################################
