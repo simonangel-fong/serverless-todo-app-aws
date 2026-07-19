@@ -1,112 +1,98 @@
-name: "Terraform Deploy"
+# Deploy
+
+name: Deploy
 
 on:
-  push:
-    branches: [master]
-    paths: # only when specific dir gets updated
-      - .github/**
-      - terraform/**
-      - lambda/**
-      - s3/**
   pull_request:
     branches: [master]
-    paths:
-      - .github/**
-      - terraform/**
-      - lambda/**
-      - s3/**
+    paths: [infra/**, lambda/**, web/**, .github/workflows/**]
+  push:
+    branches: [master]
+    paths: [infra/**, lambda/**, web/**, .github/workflows/**]
   workflow_dispatch:
+    inputs:
+      action:
+        description: Terraform action
+        type: choice
+        options: [plan, apply]
+        default: plan
+
+permissions:
+  id-token: write # REQUIRED for OIDC
+  contents: read
+
+env:
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 jobs:
-  deploy:
-    name: Terraform Deploy
+  plan:
+    name: Plan
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        # Specify pwd
-        working-directory: ./terraform
-
-    env:
-      TF_LOG: INFO
-      # CONFIG_DIRECTORY: "./"
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_BACKEND_BUCKET: ${{ secrets.AWS_BACKEND_BUCKET }}
-      AWS_BACKEND_BUCKET_KEY: ${{ secrets.AWS_BACKEND_BUCKET_KEY }}
-
-      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
-      TF_VAR_app_name: ${{ secrets.APP_NAME }}
-      TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-      TF_VAR_acm_cert_arn: ${{ secrets.ACM_CERT_ARN }}
-
     steps:
-      - name: Checkout the repository to the runner
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Read Terraform Action
-        id: action
-        run: |
-          pwd
-          ls -al
-          if [ -f ".terraform-action" ]; then
-            ACTION=$(cat .terraform-action | tr -d '\n\r')
-            echo "action=$ACTION" >> $GITHUB_OUTPUT
-          else
-            echo "action=plan" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Setup Terraform with specified version on the runner
-        uses: hashicorp/setup-terraform@v3
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          terraform_version: 1.6.6
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform Init with backend S3 bucket
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Init
         run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.AWS_BACKEND_BUCKET }}" \
-            -backend-config="region=${{ secrets.AWS_REGION }}" \
-            -backend-config="key=${{ secrets.AWS_BACKEND_BUCKET_KEY }}" \
-            -backend-config="encrypt=true"
+          terraform -chdir=infra init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
 
-      - id: fmt
-        name: Terraform format
-        run: terraform fmt -check
+      - name: Format check
+        run: terraform -chdir=infra fmt -check -recursive
 
-      - id: package-layer
-        name: Package Lambda function layers
+      - name: Validate
+        run: terraform -chdir=infra validate
+
+      - name: Plan
+        run: terraform -chdir=infra plan -var-file=dev.tfvars -out=tfplan
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infra/tfplan
+          retention-days: 1
+
+  apply:
+    name: Apply & deploy frontend
+    needs: plan
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
+    runs-on: ubuntu-latest
+    environment: production # human approval gate (required reviewers)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Init
         run: |
-          pip install \
-            -r ../lambda/requirements.txt \
-            -t ../lambda/python \
-            --platform manylinux2014_x86_64 \
-            --only-binary=:all: \
-            --upgrade
+          terraform -chdir=infra init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
 
-      - id: zip-layer
-        name: Create Lambda layer zip
-        run: |
-          zip -r ../lambda/layer.zip ../lambda/python/
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: infra
 
-      - name: Terraform validate
-        id: validate
-        run: terraform validate
-
-      - name: Terraform plan
-        id: plan
-        run: terraform plan -no-color
-        continue-on-error: true
-
-      - name: Terraform Apply
-        if: |
-          github.ref == 'refs/heads/master' && 
-          github.event_name == 'push' && 
-          steps.action.outputs.action == 'apply'
-        run: terraform apply -auto-approve
-
-      - name: Terraform Destroy
-        if: |
-          github.ref == 'refs/heads/master' && 
-          github.event_name == 'push' && 
-          steps.action.outputs.action == 'destroy'
-        run: terraform destroy -auto-approve
+      - name: Apply
+        run: terraform -chdir=infra apply -auto-approve tfplan

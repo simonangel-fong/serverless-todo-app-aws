@@ -16,10 +16,27 @@ resource "aws_cloudfront_origin_access_control" "web" {
 }
 
 # ########################################
-# Managed cache policy (AWS-managed CachingOptimized)
+# Cache policy — short TTL
 # ########################################
-data "aws_cloudfront_cache_policy" "caching_optimized" {
-  name = "Managed-CachingOptimized"
+resource "aws_cloudfront_cache_policy" "short_ttl" {
+  name        = "${local.name_prefix}-short-ttl"
+  default_ttl = 60
+  min_ttl     = 0
+  max_ttl     = 300
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+    headers_config {
+      header_behavior = "none"
+    }
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+  }
 }
 
 # ########################################
@@ -58,7 +75,7 @@ resource "aws_cloudfront_distribution" "web" {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+    cache_policy_id        = aws_cloudfront_cache_policy.short_ttl.id
   }
 
   # S3 returns 403 for a missing key. 

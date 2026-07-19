@@ -169,7 +169,7 @@ Create the CI/CD skill, then refactor `.github/workflows/deploy.yml` (OIDC, plan
 Lambda packaging, frontend sync + CloudFront invalidation).
 
 - ✅ `cicd` skill — [`.claude/skills/cicd/`](../.claude/skills/cicd/SKILL.md); OIDC auth, plan/apply gating, artifact packaging, frontend inject/sync/invalidate + reference `deploy.yml`.
-- ⬜ pipeline refactor — rewrite `.github/workflows/deploy.yml` using the skill.
+- ✅ pipeline refactor — [`deploy.yml`](../.github/workflows/deploy.yml) (OIDC, PR-plan/master-apply, env gate, saved-plan apply, frontend inject/sync/invalidate) + [`destroy.yml`](../.github/workflows/destroy.yml) (dispatch + typed confirm + env gate). Legacy `terraform/` removed.
 
 ---
 

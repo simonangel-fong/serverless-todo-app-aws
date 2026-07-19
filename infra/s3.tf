@@ -75,3 +75,55 @@ resource "aws_s3_bucket_policy" "web" {
   # public access block
   depends_on = [aws_s3_bucket_public_access_block.web]
 }
+
+# ########################################
+# Frontend content
+# ########################################
+
+locals {
+  web_dir = "${path.module}/../web"
+
+  # aws_s3_object does not infer Content-Type; map by extension so files render
+  # instead of downloading. text/* served as utf-8.
+  web_content_types = {
+    html = "text/html; charset=utf-8"
+    js   = "text/javascript; charset=utf-8"
+    css  = "text/css; charset=utf-8"
+    json = "application/json"
+    ico  = "image/x-icon"
+    png  = "image/png"
+    svg  = "image/svg+xml"
+  }
+
+  # Every file under web/ except the config template (rendered separately below).
+  web_files = toset([
+    for f in fileset(local.web_dir, "**") : f if f != "config.js.tftpl"
+  ])
+
+  # config.js rendered once from the template with this apply's outputs.
+  web_config_content = templatefile("${local.web_dir}/config.js.tftpl", {
+    api_base_url      = aws_api_gateway_stage.this.invoke_url
+    cognito_region    = var.aws_region
+    cognito_pool_id   = aws_cognito_user_pool.users.id
+    cognito_client_id = aws_cognito_user_pool_client.spa.id
+  })
+}
+
+resource "aws_s3_object" "web" {
+  for_each = local.web_files
+
+  bucket       = aws_s3_bucket.web.id
+  key          = each.value
+  source       = "${local.web_dir}/${each.value}"
+  content_type = lookup(local.web_content_types, lower(regex("[^.]+$", each.value)), "application/octet-stream")
+  etag         = filemd5("${local.web_dir}/${each.value}")
+}
+
+# config.js: the rendered template. `content` changing re-uploads it on its own,
+# so no separate etag is needed.
+resource "aws_s3_object" "web_config" {
+  bucket       = aws_s3_bucket.web.id
+  key          = "config.js"
+  content_type = "text/javascript; charset=utf-8"
+  content      = local.web_config_content
+}
