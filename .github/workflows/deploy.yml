@@ -48,11 +48,10 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::099139718958:role/serverless-todo-app-aws-github-deploy-role
+          aws-region: ca-central-1
 
       - uses: hashicorp/setup-terraform@v3
-
       - name: Init
         run: |
           terraform -chdir=infra init \

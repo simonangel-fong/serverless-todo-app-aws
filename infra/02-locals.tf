@@ -67,6 +67,7 @@ locals {
   # Cloudflare zone that hosts cloudfront_domain (the apex, not the subdomain).
   dns_zone_name = "arguswatcher.net"
 
+
   # ########################################
   # CI/CD deploy role (GitHub OIDC)
   # ########################################
@@ -146,3 +147,6 @@ locals {
     }
   }
 }
+
+
+aws iam get-role --role-name serverless-todo-app-aws-github-deploy-role  --query 'Role.{Arn:Arn,Trust:AssumeRolePolicyDocument}'

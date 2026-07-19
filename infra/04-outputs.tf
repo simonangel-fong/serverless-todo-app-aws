@@ -121,18 +121,18 @@ output "frontend_url" {
   value       = "https://${local.cloudfront_domain}"
 }
 
-# ########################################
-# CI/CD deploy role (GitHub OIDC)
-# ########################################
-output "deploy_role_arn" {
-  description = "ARN of the GitHub Actions deploy role. Set as the role-to-assume in the workflow (aws-actions/configure-aws-credentials)."
-  value       = aws_iam_role.deploy.arn
-}
+# # ########################################
+# # CI/CD deploy role (GitHub OIDC)
+# # ########################################
+# output "deploy_role_arn" {
+#   description = "ARN of the GitHub Actions deploy role. Set as the role-to-assume in the workflow (aws-actions/configure-aws-credentials)."
+#   value       = aws_iam_role.deploy.arn
+# }
 
-output "github_oidc_provider_arn" {
-  description = "ARN of the GitHub OIDC provider used by the deploy role."
-  value       = local.github_oidc_provider_arn
-}
+# output "github_oidc_provider_arn" {
+#   description = "ARN of the GitHub OIDC provider used by the deploy role."
+#   value       = local.github_oidc_provider_arn
+# }
 
 # ########################################
 # CloudWatch
