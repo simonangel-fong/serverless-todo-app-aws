@@ -26,9 +26,19 @@ env:
   TF_VAR_app_name: todo-app
 
 jobs:
-  plan:
-    name: Plan
+  # Single job: plan and (conditionally) apply run on the SAME runner. This is
+  # required because the Lambda zip is built on disk by Terraform's archive_file
+  # during plan — a separate apply job on a fresh runner would not have that file
+  # (it is gitignored, so it isn't in the checkout or a plan artifact either).
+  #
+  # PRs / dispatch-plan stop after Plan (read-only). Push to master or an explicit
+  # apply dispatch continue to Apply, which is gated on the `production`
+  # environment (required reviewers).
+  deploy:
+    name: Terraform
     runs-on: ubuntu-latest
+    # The environment gate only needs to fire when we will apply.
+    environment: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')) && 'production' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,8 +48,8 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-
       - uses: hashicorp/setup-terraform@v3
+
       - name: Init
         run: |
           terraform -chdir=infra init \
@@ -53,48 +63,15 @@ jobs:
       - name: Validate
         run: terraform -chdir=infra validate
 
+      # Plan always runs (this is the read-only step PRs stop at). archive_file
+      # builds the Lambda zip here, on this runner.
       - name: Plan
-        run:  |
-          terraform -chdir=infra plan -out=tfplan
+        run: terraform -chdir=infra plan -out=tfplan
 
-      - name: Upload plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: infra/tfplan
-          retention-days: 1
-
-  apply:
-    name: Apply & deploy frontend
-    needs: plan
-    if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
-      (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
-    runs-on: ubuntu-latest
-    environment: production # human approval gate (required reviewers)
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - uses: hashicorp/setup-terraform@v3
-
-      - name: Init
-        run: |
-          terraform -chdir=infra init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"
-
-      - name: Download plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: infra
-
+      # Apply the saved plan — same runner, so the zip built during Plan is
+      # present. Runs only on push-to-master or an explicit apply dispatch.
       - name: Apply
+        if: >-
+          (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+          (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
         run: terraform -chdir=infra apply -auto-approve tfplan
