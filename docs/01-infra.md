@@ -14,4 +14,7 @@ aws dynamodb describe-table --table-name todo-app-dev-table --query "Table.Table
 # lambda
 aws lambda get-function --function-name todo-app-dev-api
 
+# cognito
+aws cognito-idp describe-user-pool --user-pool-id ca-central-1_vzuDCzV5o
+
 ```

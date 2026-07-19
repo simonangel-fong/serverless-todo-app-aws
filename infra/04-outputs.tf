@@ -58,3 +58,21 @@ output "cognito_app_client_id" {
   description = "Cognito SPA app client ID (for the frontend sign-in config)."
   value       = aws_cognito_user_pool_client.spa.id
 }
+
+# ########################################
+# API Gateway
+# ########################################
+output "api_invoke_url" {
+  description = "Base invoke URL for the API (frontend API base path)."
+  value       = aws_api_gateway_stage.this.invoke_url
+}
+
+output "api_rest_api_id" {
+  description = "REST API ID."
+  value       = aws_api_gateway_rest_api.this.id
+}
+
+output "api_stage_name" {
+  description = "Deployed stage name."
+  value       = aws_api_gateway_stage.this.stage_name
+}

@@ -35,4 +35,18 @@ locals {
 
   # Minimum password length
   cognito_password_min_length = 8
+
+  # ########################################
+  # API Gateway
+  # ########################################
+  apigw_stage_name         = var.env
+  apigw_log_retention_days = 14
+
+  apigw_routes = {
+    list_items  = { http_method = "GET", resource_key = "items" }
+    create_item = { http_method = "POST", resource_key = "items" }
+    get_item    = { http_method = "GET", resource_key = "item" }
+    update_item = { http_method = "PUT", resource_key = "item" }
+    delete_item = { http_method = "DELETE", resource_key = "item" }
+  }
 }

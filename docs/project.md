@@ -152,7 +152,7 @@ Refactor each resource group in order. Rename `terraform/` → `infra/`, introdu
 1. DynamoDB — table **plus `owner-index` GSI** ✅ *done — [`infra/modules/dynamodb/`](../infra/modules/dynamodb/main.tf)*
 2. Lambda ✅ *done — [`infra/lambda.tf`](../infra/lambda.tf); handler `handler.lambda_handler`, `src/` packaged, env vars wired, dependency layer dropped, exec role least-privilege*
 3. **Cognito** — user pool + app client ✅ *done — [`infra/cognito.tf`](../infra/cognito.tf); email sign-in pool + public SPA client (no secret, SRP + code flow)*
-4. API Gateway — **wire the Cognito authorizer** onto the routes
+4. API Gateway — **wire the Cognito authorizer** onto the routes ✅ *done — [`infra/apigateway.tf`](../infra/apigateway.tf); routes via `for_each` (~580 lines → ~1 file), Cognito authorizer on every route, OPTIONS MOCK preflight, Lambda invoke permission*
 5. S3 bucket
 6. CloudFront
 7. IAM / GitHub OIDC role
