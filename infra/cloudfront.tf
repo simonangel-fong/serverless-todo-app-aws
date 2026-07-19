@@ -51,6 +51,55 @@ data "aws_acm_certificate" "frontend" {
 }
 
 # ########################################
+# WAFv2 web ACL (CLOUDFRONT scope -> must be us-east-1)
+# ########################################
+# Fronts the distribution with the AWS-managed Common Rule Set (OWASP-style
+# protections: bad inputs, common exploits). Satisfies trivy AWS-0011.
+resource "aws_wafv2_web_acl" "cloudfront" {
+  provider = aws.us_east_1
+
+  name        = "${local.name_prefix}-cloudfront"
+  description = "WAF for the ${var.app_name} frontend distribution"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "aws-common-rule-set"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${local.name_prefix}-common-rules"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.name_prefix}-cloudfront-waf"
+    sampled_requests_enabled   = true
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-cloudfront"
+  }
+}
+
+# ########################################
 # Distribution
 # ########################################
 resource "aws_cloudfront_distribution" "web" {
@@ -59,6 +108,10 @@ resource "aws_cloudfront_distribution" "web" {
   default_root_object = "index.html"
   price_class         = local.cloudfront_price_class
   comment             = "${local.name_prefix} frontend"
+
+  # WAF (CloudFront distributions reference the ACL by id directly, not via a
+  # separate association resource).
+  web_acl_id = aws_wafv2_web_acl.cloudfront.arn
 
   # Custom domain
   aliases = [local.cloudfront_domain]

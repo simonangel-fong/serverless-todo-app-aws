@@ -1,0 +1,17 @@
+# Trivy misconfiguration suppressions for infra/. Each entry needs a documented
+# reason — suppressions are decisions, not noise-silencing.
+
+# AWS-0132: "Bucket does not encrypt data with a customer managed key."
+# The web bucket holds only PUBLIC static frontend assets (HTML/JS/CSS). It is
+# encrypted at rest with SSE-S3 (AES256, see aws_s3_bucket_server_side_encryption
+# _configuration.web). A customer-managed KMS key would add cost and key
+# management with no benefit for non-sensitive public content, so the CMK-specific
+# rule is intentionally suppressed.
+AWS-0132
+
+# AWS-0136: "Topic encryption does not use a customer managed key."
+# The SNS alarm topic is encrypted with the AWS-managed key (alias/aws/sns). It
+# carries only CloudWatch alarm notifications — no sensitive data — so a
+# customer-managed KMS key's cost and rotation/policy management add no value.
+# Same rationale as AWS-0132.
+AWS-0136

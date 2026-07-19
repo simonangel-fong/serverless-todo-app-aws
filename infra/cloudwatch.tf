@@ -14,6 +14,10 @@ locals {
 resource "aws_sns_topic" "alarms" {
   name = "${local.name_prefix}-alarms"
 
+  # Encrypt topic contents at rest with the AWS-managed SNS key (no cost, no key
+  # management). Satisfies tfsec/trivy AWS-0095.
+  kms_master_key_id = "alias/aws/sns"
+
   tags = {
     Name = "${local.name_prefix}-alarms"
   }

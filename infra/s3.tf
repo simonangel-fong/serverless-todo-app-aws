@@ -23,6 +23,21 @@ resource "aws_s3_bucket_versioning" "web" {
   }
 }
 
+# Encrypt objects at rest with SSE-S3 (AES256). This is stated explicitly rather
+# than relying on the account default. A customer-managed KMS key (trivy
+# AWS-0132) is intentionally NOT used — the bucket holds only public static web
+# assets, so a CMK's cost and key management add no value; AWS-0132 is suppressed
+# in .trivyignore with that rationale.
+resource "aws_s3_bucket_server_side_encryption_configuration" "web" {
+  bucket = aws_s3_bucket.web.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 # Block every form of public access.
 resource "aws_s3_bucket_public_access_block" "web" {
   bucket = aws_s3_bucket.web.id

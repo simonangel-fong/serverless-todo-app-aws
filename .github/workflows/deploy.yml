@@ -26,6 +26,24 @@ env:
   TF_VAR_app_name: todo-app
 
 jobs:
+  # Security: static analysis of the Terraform for misconfigurations. Trivy is
+  # the maintained successor to tfsec (same rules engine). Blocks on HIGH/
+  # CRITICAL findings; suppressions with rationale live in infra/.trivyignore.
+  security:
+    name: Security scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Trivy IaC scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra
+          severity: HIGH,CRITICAL
+          exit-code: "1" # fail the job on any finding at these severities
+          trivyignores: infra/.trivyignore
+
   # Single job: plan and (conditionally) apply run on the SAME runner. This is
   # required because the Lambda zip is built on disk by Terraform's archive_file
   # during plan — a separate apply job on a fresh runner would not have that file
@@ -36,19 +54,20 @@ jobs:
   # environment (required reviewers).
   deploy:
     name: Terraform
+    needs: security # don't plan/apply if the security scan fails
     runs-on: ubuntu-latest
     # The environment gate only needs to fire when we will apply.
     environment: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')) && 'production' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
 
       - name: Init
         run: |
